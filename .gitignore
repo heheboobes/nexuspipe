@@ -1,0 +1,64 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.test.exe
+/bin/
+/build/
+/dist/
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.helm/
+.netrwhist
+.ropeproject/
+*.sublime-workspace
+*.sublime-project
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+
+# Dependencies
+/vendor/
+
+# Environment
+.env
+.env.*
+!.env.example
+*.env.local
+
+# Docker
+docker-compose.override.yml
+
+# Migrations
+/migrations/*.sql.lock
+
+# Proto
+*.pb.go
+*.pb.gw.go
+
+# Coverage
+coverage.out
+coverage.html
+profile.out
+*.coverprofile
+
+# Temp
+/tmp/
+/scratch/
+*.log
