@@ -9,15 +9,17 @@ import (
 )
 
 type Config struct {
-	App       AppConfig       `mapstructure:"app" yaml:"app"`
-	Database  DatabaseConfig  `mapstructure:"database" yaml:"database"`
-	RabbitMQ  RabbitMQConfig  `mapstructure:"rabbitmq" yaml:"rabbitmq"`
-	Redis     RedisConfig     `mapstructure:"redis" yaml:"redis"`
-	Auth      AuthConfig      `mapstructure:"auth" yaml:"auth"`
-	Metrics   MetricsConfig   `mapstructure:"metrics" yaml:"metrics"`
-	Worker    WorkerConfig    `mapstructure:"worker" yaml:"worker"`
-	Scheduler SchedulerConfig `mapstructure:"scheduler" yaml:"scheduler"`
-	Log       LogConfig       `mapstructure:"log" yaml:"log"`
+	App            AppConfig            `mapstructure:"app" yaml:"app"`
+	Database       DatabaseConfig       `mapstructure:"database" yaml:"database"`
+	RabbitMQ       RabbitMQConfig       `mapstructure:"rabbitmq" yaml:"rabbitmq"`
+	Redis          RedisConfig          `mapstructure:"redis" yaml:"redis"`
+	Auth           AuthConfig           `mapstructure:"auth" yaml:"auth"`
+	Metrics        MetricsConfig        `mapstructure:"metrics" yaml:"metrics"`
+	Worker         WorkerConfig         `mapstructure:"worker" yaml:"worker"`
+	Scheduler      SchedulerConfig      `mapstructure:"scheduler" yaml:"scheduler"`
+	PipelineEngine PipelineEngineConfig `mapstructure:"pipeline_engine" yaml:"pipeline_engine"`
+	Webhook        WebhookConfig        `mapstructure:"webhook" yaml:"webhook"`
+	Log            LogConfig            `mapstructure:"log" yaml:"log"`
 }
 
 type AppConfig struct {
@@ -112,6 +114,24 @@ type CronJob struct {
 	Schedule string `mapstructure:"schedule" yaml:"schedule"`
 	Type     string `mapstructure:"type" yaml:"type"`
 	Payload  string `mapstructure:"payload" yaml:"payload"`
+}
+
+type PipelineEngineConfig struct {
+	MaxStageTimeout time.Duration `mapstructure:"max_stage_timeout" yaml:"max_stage_timeout"`
+	DefaultRetries  int           `mapstructure:"default_retries" yaml:"default_retries"`
+	MaxConcurrency  int           `mapstructure:"max_concurrency" yaml:"max_concurrency"`
+	StageBufferSize int           `mapstructure:"stage_buffer_size" yaml:"stage_buffer_size"`
+	EnableTracing   bool          `mapstructure:"enable_tracing" yaml:"enable_tracing"`
+	MetricsFlushSec int           `mapstructure:"metrics_flush_sec" yaml:"metrics_flush_sec"`
+}
+
+type WebhookConfig struct {
+	MaxRetries       int           `mapstructure:"max_retries" yaml:"max_retries"`
+	RetryBackoff     time.Duration `mapstructure:"retry_backoff" yaml:"retry_backoff"`
+	MaxPayloadSize   int           `mapstructure:"max_payload_size" yaml:"max_payload_size"`
+	Timeout          time.Duration `mapstructure:"timeout" yaml:"timeout"`
+	ConcurrencyLimit int           `mapstructure:"concurrency_limit" yaml:"concurrency_limit"`
+	QueueName        string        `mapstructure:"queue_name" yaml:"queue_name"`
 }
 
 type LogConfig struct {
@@ -234,6 +254,20 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("scheduler.enabled", true)
 	v.SetDefault("scheduler.timezone", "UTC")
+
+	v.SetDefault("pipeline_engine.max_stage_timeout", "30m")
+	v.SetDefault("pipeline_engine.default_retries", 3)
+	v.SetDefault("pipeline_engine.max_concurrency", 50)
+	v.SetDefault("pipeline_engine.stage_buffer_size", 1000)
+	v.SetDefault("pipeline_engine.enable_tracing", false)
+	v.SetDefault("pipeline_engine.metrics_flush_sec", 10)
+
+	v.SetDefault("webhook.max_retries", 5)
+	v.SetDefault("webhook.retry_backoff", "30s")
+	v.SetDefault("webhook.max_payload_size", 1048576)
+	v.SetDefault("webhook.timeout", "10s")
+	v.SetDefault("webhook.concurrency_limit", 20)
+	v.SetDefault("webhook.queue_name", "nexuspipe.webhooks")
 
 	v.SetDefault("log.level", "info")
 	v.SetDefault("log.format", "json")
