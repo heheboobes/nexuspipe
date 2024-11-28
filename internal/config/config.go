@@ -18,6 +18,7 @@ type Config struct {
 	Worker         WorkerConfig         `mapstructure:"worker" yaml:"worker"`
 	Scheduler      SchedulerConfig      `mapstructure:"scheduler" yaml:"scheduler"`
 	PipelineEngine PipelineEngineConfig `mapstructure:"pipeline_engine" yaml:"pipeline_engine"`
+	CircuitBreaker CircuitBreakerConfig `mapstructure:"circuit_breaker" yaml:"circuit_breaker"`
 	Webhook        WebhookConfig        `mapstructure:"webhook" yaml:"webhook"`
 	Log            LogConfig            `mapstructure:"log" yaml:"log"`
 }
@@ -123,6 +124,14 @@ type PipelineEngineConfig struct {
 	StageBufferSize int           `mapstructure:"stage_buffer_size" yaml:"stage_buffer_size"`
 	EnableTracing   bool          `mapstructure:"enable_tracing" yaml:"enable_tracing"`
 	MetricsFlushSec int           `mapstructure:"metrics_flush_sec" yaml:"metrics_flush_sec"`
+}
+
+type CircuitBreakerConfig struct {
+	Enabled          bool          `mapstructure:"enabled" yaml:"enabled"`
+	FailureThreshold int           `mapstructure:"failure_threshold" yaml:"failure_threshold"`
+	SuccessThreshold int           `mapstructure:"success_threshold" yaml:"success_threshold"`
+	Timeout          time.Duration `mapstructure:"timeout" yaml:"timeout"`
+	HalfOpenMaxReqs  int           `mapstructure:"half_open_max_requests" yaml:"half_open_max_requests"`
 }
 
 type WebhookConfig struct {
@@ -254,6 +263,12 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("scheduler.enabled", true)
 	v.SetDefault("scheduler.timezone", "UTC")
+
+	v.SetDefault("circuit_breaker.enabled", true)
+	v.SetDefault("circuit_breaker.failure_threshold", 5)
+	v.SetDefault("circuit_breaker.success_threshold", 2)
+	v.SetDefault("circuit_breaker.timeout", "30s")
+	v.SetDefault("circuit_breaker.half_open_max_requests", 3)
 
 	v.SetDefault("pipeline_engine.max_stage_timeout", "30m")
 	v.SetDefault("pipeline_engine.default_retries", 3)
