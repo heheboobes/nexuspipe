@@ -1,0 +1,87 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: "nexuspipe-api"
+    scrape_interval: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "nexuspipe-api:9090"
+        labels:
+          service: nexuspipe
+          component: api
+
+  - job_name: "nexuspipe-worker"
+    scrape_interval: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "nexuspipe-worker:9091"
+        labels:
+          service: nexuspipe
+          component: worker
+
+  - job_name: "nexuspipe-scheduler"
+    scrape_interval: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "nexuspipe-scheduler:9092"
+        labels:
+          service: nexuspipe
+          component: scheduler
+
+  - job_name: "postgres"
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - "postgres-exporter:9187"
+        labels:
+          service: postgres
+
+  - job_name: "rabbitmq"
+    scrape_interval: 30s
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "rabbitmq:15692"
+        labels:
+          service: rabbitmq
+
+  - job_name: "redis"
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - "redis-exporter:9121"
+        labels:
+          service: redis
+
+  - job_name: "consul"
+    scrape_interval: 30s
+    metrics_path: /v1/agent/metrics
+    params:
+      format: ["prometheus"]
+    static_configs:
+      - targets:
+          - "consul:8500"
+        labels:
+          service: consul
+
+  - job_name: "node"
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          - "node-exporter:9100"
+        labels:
+          service: node
