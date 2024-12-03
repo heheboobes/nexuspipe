@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - ".gitignore"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - ".gitignore"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: "1.22"
+  GOLANGCI_LINT_VERSION: v1.57.2
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+          args: --timeout=5m --out-format=colored-line-number
+
+      - name: Lint
+        run: make lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nexuspipe
+          POSTGRES_PASSWORD: nexuspipe_test
+          POSTGRES_DB: nexuspipe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U nexuspipe -d nexuspipe_test
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests with race detection
+        run: go test -v -race -count=1 -coverprofile=coverage.out ./...
+        env:
+          NEXUSPIPE_DB_HOST: localhost
+          NEXUSPIPE_DB_PORT: 5432
+          NEXUSPIPE_DB_USER: nexuspipe
+          NEXUSPIPE_DB_PASSWORD: nexuspipe_test
+          NEXUSPIPE_DB_NAME: nexuspipe_test
+          NEXUSPIPE_DB_SSLMODE: disable
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 7
+
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          go tool cover -func=coverage.out | tail -1 | awk '{print $NF}' > coverage.txt
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Build all targets
+        run: make build
+
+      - name: Verify binaries
+        run: |
+          ls -la build/
+          file build/nexuspipe-api
+          file build/nexuspipe-worker
+          file build/nexuspipe-scheduler
+          file build/nexuspipe-migrator
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: build/
+          retention-days: 3
