@@ -19,6 +19,7 @@ type Config struct {
 	Scheduler      SchedulerConfig      `mapstructure:"scheduler" yaml:"scheduler"`
 	PipelineEngine PipelineEngineConfig `mapstructure:"pipeline_engine" yaml:"pipeline_engine"`
 	CircuitBreaker CircuitBreakerConfig `mapstructure:"circuit_breaker" yaml:"circuit_breaker"`
+	DAG            DAGConfig            `mapstructure:"dag" yaml:"dag"`
 	Webhook        WebhookConfig        `mapstructure:"webhook" yaml:"webhook"`
 	Log            LogConfig            `mapstructure:"log" yaml:"log"`
 }
@@ -132,6 +133,13 @@ type CircuitBreakerConfig struct {
 	SuccessThreshold int           `mapstructure:"success_threshold" yaml:"success_threshold"`
 	Timeout          time.Duration `mapstructure:"timeout" yaml:"timeout"`
 	HalfOpenMaxReqs  int           `mapstructure:"half_open_max_requests" yaml:"half_open_max_requests"`
+}
+
+type DAGConfig struct {
+	MaxParallelBranches int           `mapstructure:"max_parallel_branches" yaml:"max_parallel_branches"`
+	DefaultTimeout      time.Duration `mapstructure:"default_timeout" yaml:"default_timeout"`
+	FailFast            bool          `mapstructure:"fail_fast" yaml:"fail_fast"`
+	MaxDepth            int           `mapstructure:"max_depth" yaml:"max_depth"`
 }
 
 type WebhookConfig struct {
@@ -263,6 +271,11 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("scheduler.enabled", true)
 	v.SetDefault("scheduler.timezone", "UTC")
+
+	v.SetDefault("dag.max_parallel_branches", 10)
+	v.SetDefault("dag.default_timeout", "1h")
+	v.SetDefault("dag.fail_fast", true)
+	v.SetDefault("dag.max_depth", 50)
 
 	v.SetDefault("circuit_breaker.enabled", true)
 	v.SetDefault("circuit_breaker.failure_threshold", 5)
