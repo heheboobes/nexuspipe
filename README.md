@@ -179,6 +179,16 @@ NexusPipe exports structured logs and Prometheus metrics:
 - **Metrics**: HTTP request duration histograms, event processing latency, queue depths, error rates, and goroutine counts
 - **Tracing**: Events carry `correlation_id` and `causation_id` for distributed trace correlation
 
+## DAG Execution
+
+NexusPipe supports Directed Acyclic Graph (DAG) based task execution for complex pipeline workflows:
+
+- **Parallel Branches**: Tasks at the same dependency level execute concurrently
+- **Conditional Execution**: Tasks can be skipped based on runtime conditions
+- **Topological Sorting**: Automatic execution order based on dependency graph
+- **Cycle Detection**: Prevents invalid pipeline configurations
+- **Fail-Fast Policy**: Configurable error propagation strategy
+
 ## Development
 
 ```bash
